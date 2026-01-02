@@ -4,11 +4,11 @@ A Python REST API for managing game servers. Built with FastAPI, this API provid
 
 ## Features
 
-- 🎮 Manage multiple game servers
-- 🚀 Fast and modern REST API built with FastAPI
-- 📝 Automatic interactive API documentation (Swagger UI)
-- ✅ Data validation with Pydantic
-- 💾 In-memory storage for server data
+- Manage multiple game servers
+- Fast and modern REST API built with FastAPI
+- Automatic interactive API documentation (Swagger UI)
+- Data validation with Pydantic
+- In-memory storage for server data
 
 ## Requirements
 
