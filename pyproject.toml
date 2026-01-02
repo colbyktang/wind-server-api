@@ -1,0 +1,11 @@
+[project]
+name = "wind-server-api"
+version = "0.1.0"
+description = "A Python REST API for managing game servers. Built with FastAPI, this API provides endpoints to create, read, update, and delete game server configurations."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.128.0",
+    "sqlalchemy>=2.0.45",
+    "uvicorn>=0.40.0",
+]
