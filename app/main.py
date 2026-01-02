@@ -2,7 +2,9 @@ from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
 from typing import List
 from app.models import GameServer, GameServerUpdate
+from app.auth.login import login
 from app.storage import game_server_store
+from app.database import SessionLocal
 
 # Create FastAPI app
 app = FastAPI(
@@ -28,6 +30,16 @@ def read_root():
         }
     }
 
+@app.get("/login", tags=["auth"])
+def login():
+    """Login endpoint"""
+    login_response = login()
+    return login_response
+
+@app.get("/register", tags=["auth"])
+def register():
+    """Register an account"""
+
 
 @app.get("/servers", response_model=List[GameServer], tags=["servers"])
 def list_servers():
@@ -39,8 +51,9 @@ def list_servers():
 @app.get("/servers/{server_id}", response_model=GameServer, tags=["servers"])
 def get_server(server_id: str):
     """Get a specific game server by ID"""
-    server = game_server_store.get_server(server_id)
-    if not server:
+    try:
+        server = game_server_store.get_server(server_id)
+    except KeyError as ke:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Server with ID {server_id} not found"
@@ -51,7 +64,13 @@ def get_server(server_id: str):
 @app.post("/servers", response_model=GameServer, status_code=status.HTTP_201_CREATED, tags=["servers"])
 def create_server(server: GameServer):
     """Create a new game server"""
-    created_server = game_server_store.create_server(server)
+    try:
+        created_server = game_server_store.create_server(server)
+    except KeyError as ke:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(ke)
+        )
     return created_server
 
 
@@ -61,13 +80,13 @@ def update_server(server_id: str, updates: GameServerUpdate):
     # Convert to dict and filter out None values
     update_data = updates.model_dump(exclude_unset=True)
     
-    updated_server = game_server_store.update_server(server_id, update_data)
-    if not updated_server:
+    game_server_store.update_server(server_id, update_data)
+    if not game_server_store.get_server(server_id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Server with ID {server_id} not found"
         )
-    return updated_server
+    return game_server_store.get_server(server_id)
 
 
 @app.delete("/servers/{server_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["servers"])
@@ -86,3 +105,14 @@ def delete_server(server_id: str):
 def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "service": "wind-server-api"}
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@app.get("/users")
+def get_users(db: Session = Depends(get_db)):
+    return db.query(User).all()

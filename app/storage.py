@@ -20,7 +20,10 @@ class GameServerStore:
     
     def get_server(self, server_id: str) -> GameServer:
         """Get a server by ID"""
-        return self.servers.get(server_id)
+        server = self.servers.get(server_id)
+        if not server:
+            raise KeyError("Server not found")
+        return server
     
     def get_all_servers(self) -> list[GameServer]:
         """Get all servers"""
@@ -30,8 +33,8 @@ class GameServerStore:
         """Update a server"""
         server = self.servers.get(server_id)
         if not server:
-            return None
-        
+            raise KeyError("Server not found")
+
         # Update fields
         for key, value in updates.items():
             if value is not None and hasattr(server, key):
