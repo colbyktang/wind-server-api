@@ -1,0 +1,46 @@
+GET http://localhost:8000/
+
+###
+GET http://localhost:8000/health
+###
+
+GET http://localhost:8000/servers
+
+
+###
+
+GET http://localhost:8000/servers/1
+
+###
+POST http://localhost:8000/servers/
+Content-Type: application/json
+
+{
+    "name": "Epic Minecraft Server",
+    "game": "Minecraft",
+    "ip_address": "192.168.1.100",
+    "port": 25565,
+    "max_players": 20,
+    "current_players": 5,
+    "status": "online"
+}
+
+###
+PUT http://localhost:8000/servers/a9e54729-398c-497d-a3f7-82cda67d820e
+Content-Type: application/json
+
+{
+    "name": "NEW Minecraft Server",
+    "game": "Minecraft",
+    "ip_address": "192.168.1.100",
+    "port": 25565,
+    "max_players": 20,
+    "current_players": 5,
+    "status": "online"
+}
+
+###
+DELETE http://localhost:8000/servers/a9e54729-398c-497d-a3f7-82cda67d820e
+
+###
+GET http://localhost:8000/login
