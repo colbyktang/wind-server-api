@@ -1,10 +1,15 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, Depends, Response, status
 from fastapi.responses import JSONResponse
 from typing import List
-from app.models import GameServer, GameServerUpdate
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+from datetime import datetime
+
+from app.auth.user import User
 from app.auth.login import login
-from app.storage import game_server_store
-from app.database import SessionLocal
+from app.auth.register import register
+from app.database import get_db
 
 # Create FastAPI app
 app = FastAPI(
@@ -22,97 +27,42 @@ def read_root():
         "description": "REST API for managing game servers",
         "version": "1.0.0",
         "endpoints": {
-            "GET /servers": "List all game servers",
-            "GET /servers/{server_id}": "Get a specific game server",
-            "POST /servers": "Create a new game server",
-            "PUT /servers/{server_id}": "Update a game server",
-            "DELETE /servers/{server_id}": "Delete a game server"
+            "GET /health": "Checks the health of the API and its dependencies",
+            "POST /auth/register": "Register an account",
+            "POST /auth/login": "Login endpoint",
         }
     }
 
-@app.get("/login", tags=["auth"])
-def login():
+@app.get("/health", tags=["root"])
+def health_route(response: Response, db: Session = Depends(get_db)):
+    """Checks the health of the API and its dependencies"""
+    db_status = "ok"
+    try:
+        db.execute(text("SELECT 1"))
+    except (SQLAlchemyError, ConnectionRefusedError):
+        db_status = "error"
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    finally:
+        if db is not None and db.is_active:
+            db.close()
+
+    return {
+        "status": "ok" if db_status == "ok" else "error",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "dependencies": {
+            "database": db_status
+        }
+    }
+        
+
+@app.post("/auth/login", tags=["auth"])
+def login_route(user: User, db: Session = Depends(get_db)):
     """Login endpoint"""
-    login_response = login()
+    login_response = login(user, db)
     return login_response
 
-@app.get("/register", tags=["auth"])
-def register():
+@app.post("/auth/register", tags=["auth"])
+def register_route(user: User, db: Session = Depends(get_db)):
     """Register an account"""
-
-
-@app.get("/servers", response_model=List[GameServer], tags=["servers"])
-def list_servers():
-    """Get all game servers"""
-    servers = game_server_store.get_all_servers()
-    return servers
-
-
-@app.get("/servers/{server_id}", response_model=GameServer, tags=["servers"])
-def get_server(server_id: str):
-    """Get a specific game server by ID"""
-    try:
-        server = game_server_store.get_server(server_id)
-    except KeyError as ke:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Server with ID {server_id} not found"
-        )
-    return server
-
-
-@app.post("/servers", response_model=GameServer, status_code=status.HTTP_201_CREATED, tags=["servers"])
-def create_server(server: GameServer):
-    """Create a new game server"""
-    try:
-        created_server = game_server_store.create_server(server)
-    except KeyError as ke:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(ke)
-        )
-    return created_server
-
-
-@app.put("/servers/{server_id}", response_model=GameServer, tags=["servers"])
-def update_server(server_id: str, updates: GameServerUpdate):
-    """Update an existing game server"""
-    # Convert to dict and filter out None values
-    update_data = updates.model_dump(exclude_unset=True)
-    
-    game_server_store.update_server(server_id, update_data)
-    if not game_server_store.get_server(server_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Server with ID {server_id} not found"
-        )
-    return game_server_store.get_server(server_id)
-
-
-@app.delete("/servers/{server_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["servers"])
-def delete_server(server_id: str):
-    """Delete a game server"""
-    deleted = game_server_store.delete_server(server_id)
-    if not deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Server with ID {server_id} not found"
-        )
-    return None
-
-
-@app.get("/health", tags=["health"])
-def health_check():
-    """Health check endpoint"""
-    return {"status": "healthy", "service": "wind-server-api"}
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-@app.get("/users")
-def get_users(db: Session = Depends(get_db)):
-    return db.query(User).all()
+    register_response = register(user, db)
+    return register_response

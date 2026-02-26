@@ -13,7 +13,7 @@ A Python REST API for managing game servers. Built with FastAPI, this API provid
 ## Requirements
 
 - Python 3.8+
-- pip
+- [uv](https://github.com/astral-sh/uv)
 
 ## Installation
 
@@ -23,9 +23,11 @@ git clone https://github.com/colbyktang/wind-server-api.git
 cd wind-server-api
 ```
 
-2. Install dependencies:
+2. Create a virtual environment and install dependencies:
 ```bash
-pip install -r requirements.txt
+python -m venv .venv
+source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
+uv pip install -r requirements.txt
 ```
 
 ## Usage
