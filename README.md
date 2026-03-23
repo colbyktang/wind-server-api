@@ -1,18 +1,19 @@
 # Wind Server API
 
-A Python REST API for managing game servers. Built with FastAPI, this API provides endpoints to create, read, update, and delete game server configurations.
+A Python REST API for managing game servers. Built with FastAPI, SQLAlchemy, and SQLite.
 
 ## Features
 
-- Manage multiple game servers
-- Fast and modern REST API built with FastAPI
-- Automatic interactive API documentation (Swagger UI)
+- User registration and login with bcrypt password hashing
+- JWT-ready authentication structure
+- Health check endpoint with database connectivity status
+- Interactive API documentation via Swagger UI
 - Data validation with Pydantic
-- In-memory storage for server data
+- SQLite database with SQLAlchemy ORM
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.11+
 - [uv](https://github.com/astral-sh/uv)
 
 ## Installation
@@ -58,92 +59,53 @@ Once the server is running, visit:
 
 ### Root
 - `GET /` - API information and available endpoints
-- `GET /health` - Health check endpoint
+- `GET /health` - Health check with database connectivity status
 
-### Game Servers
-- `GET /servers` - List all game servers
-- `GET /servers/{server_id}` - Get a specific game server
-- `POST /servers` - Create a new game server
-- `PUT /servers/{server_id}` - Update a game server
-- `DELETE /servers/{server_id}` - Delete a game server
+### Auth
+- `POST /auth/register` - Register a new user account
+- `POST /auth/login` - Login with username and password
 
 ## Example Usage
 
-### Create a Game Server
+### Register a User
 
 ```bash
-curl -X POST "http://localhost:8000/servers" \
+curl -X POST "http://localhost:8000/auth/register" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Epic Minecraft Server",
-    "game": "Minecraft",
-    "ip_address": "192.168.1.100",
-    "port": 25565,
-    "max_players": 20,
-    "current_players": 5,
-    "status": "online"
+    "username": "myuser",
+    "password": "mypassword"
   }'
 ```
 
-### List All Servers
+### Login
 
 ```bash
-curl -X GET "http://localhost:8000/servers"
-```
-
-### Get a Specific Server
-
-```bash
-curl -X GET "http://localhost:8000/servers/{server_id}"
-```
-
-### Update a Server
-
-```bash
-curl -X PUT "http://localhost:8000/servers/{server_id}" \
+curl -X POST "http://localhost:8000/auth/login" \
   -H "Content-Type: application/json" \
   -d '{
-    "current_players": 10,
-    "status": "online"
+    "username": "myuser",
+    "password": "mypassword"
   }'
 ```
 
-### Delete a Server
+### Health Check
 
 ```bash
-curl -X DELETE "http://localhost:8000/servers/{server_id}"
+curl -X GET "http://localhost:8000/health"
 ```
 
-## Game Server Model
+## User Model
 
-Each game server has the following properties:
+Each user has the following properties:
 
-- `id` (string, auto-generated): Unique identifier
-- `name` (string, required): Name of the game server
-- `game` (string, required): Type of game (e.g., Minecraft, Counter-Strike)
-- `ip_address` (string, required): IP address of the server
-- `port` (integer, required): Port number (1-65535)
-- `max_players` (integer, required): Maximum number of players
-- `current_players` (integer, default: 0): Current number of players
-- `status` (string, default: "offline"): Server status (online/offline/maintenance)
-- `created_at` (datetime, auto-generated): Creation timestamp
-- `updated_at` (datetime, auto-generated): Last update timestamp
-
-## Development
-
-The project structure:
-
-```
-wind-server-api/
-├── app/
-│   ├── __init__.py
-│   ├── main.py       # FastAPI application and routes
-│   ├── models.py     # Pydantic models
-│   └── storage.py    # In-memory data storage
-├── requirements.txt  # Python dependencies
-├── run.py           # Application entry point
-└── README.md        # This file
-```
+- `id` (integer, auto-generated) - Unique identifier
+- `username` (string, unique, required) - Username, max 50 characters
+- `hashed_password` (string) - bcrypt-hashed password
+- `is_admin` (boolean, default: false) - Admin flag
+- `vault_policy` (string, optional) - Vault policy assignment
+- `created_at` (datetime, auto-generated) - Account creation timestamp
+- `last_login` (datetime, nullable) - Last login timestamp
 
 ## License
 
