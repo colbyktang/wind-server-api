@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends, Response, status, Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from typing import List
@@ -8,6 +9,8 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone, UTC
 from jwt import PyJWTError
+from starlette.middleware.base import BaseHTTPMiddleware
+import os
 
 from app.auth.auth_models import RefreshToken as RefreshTokenModel
 from app.auth.auth_models import RevokedToken as RevokedTokenModel
@@ -20,6 +23,7 @@ from app.auth.security import require_admin, create_access_token, decode_access_
 from app.database import get_db
 
 limiter = Limiter(key_func=get_remote_address)
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:4200").split(",")
 
 # Create FastAPI app
 app = FastAPI(
@@ -28,6 +32,22 @@ app = FastAPI(
     version="1.0.0"
 )
 
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000"
+        return response
+    
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/", tags=["root"])
 def read_root():
@@ -123,6 +143,8 @@ def logout_route(body: RefreshRequest, db: Session = Depends(get_db), token: str
             db.add(RevokedTokenModel(jti=jti, expires_at=exp))
     except PyJWTError:
         pass # if it's already invalid, no need to blocklist
+
+    db.commit()
     return {"message": "Logged out."}
 
 @app.get("/servers", tags=["servers"])
