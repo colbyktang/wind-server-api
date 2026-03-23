@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Response, status
+from fastapi import FastAPI, HTTPException, Depends, Response, status, Request
 from fastapi.responses import JSONResponse
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -67,14 +67,14 @@ def health_route(response: Response, db: Session = Depends(get_db)):
 
 @app.post("/auth/login", tags=["auth"])
 @limiter.limit("5/minute")
-def login_route(user: User, db: Session = Depends(get_db)):
+def login_route(request: Request, user: User, db: Session = Depends(get_db)):
     """Login endpoint"""
     login_response = login(user, db)
     return login_response
 
 @app.post("/auth/register", tags=["auth"])
 @limiter.limit("5/minute")
-def register_route(user: User, db: Session = Depends(get_db)):
+def register_route(request: Request, user: User, db: Session = Depends(get_db)):
     """Register an account"""
     register_response = register(user, db)
     return register_response
@@ -88,7 +88,7 @@ def refresh_route(body: RefreshRequest, db: Session = Depends(get_db)):
         RefreshTokenModel.revoked.is_(False),
     ).first()
 
-    if db_token is None or db_token.expires_at < datetime.now(timezone.utc):
+    if db_token is None or db_token.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired refresh token.")
     
     user = db.query(UserModel).filter(UserModel.id == db_token.user_id).first()

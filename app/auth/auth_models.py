@@ -31,4 +31,4 @@ class RevokedToken(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     jti: Mapped[str] = mapped_column(String(36), unique=True, nullable=False, index=True)
-    expires_at: Mapped[DateTime] = mapped_column(nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(nullable=False)

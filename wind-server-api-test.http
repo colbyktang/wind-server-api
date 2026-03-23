@@ -7,40 +7,49 @@ GET http://localhost:8000/health
 GET http://localhost:8000/servers
 
 
-###
-
-GET http://localhost:8000/servers/1
-
-###
-POST http://localhost:8000/servers/
+### Register
+POST http://localhost:8000/auth/register
 Content-Type: application/json
 
 {
-    "name": "Epic Minecraft Server",
-    "game": "Minecraft",
-    "ip_address": "192.168.1.100",
-    "port": 25565,
-    "max_players": 20,
-    "current_players": 5,
-    "status": "online"
+    "username": "testuser",
+    "password": "supersecretpassword"
 }
 
 ###
-PUT http://localhost:8000/servers/a9e54729-398c-497d-a3f7-82cda67d820e
+
+### Login — copy the access_token and refresh_token from the response
+POST http://localhost:8000/auth/login
 Content-Type: application/json
 
 {
-    "name": "NEW Minecraft Server",
-    "game": "Minecraft",
-    "ip_address": "192.168.1.100",
-    "port": 25565,
-    "max_players": 20,
-    "current_players": 5,
-    "status": "online"
+    "username": "testuser",
+    "password": "supersecretpassword"
 }
 
 ###
-DELETE http://localhost:8000/servers/a9e54729-398c-497d-a3f7-82cda67d820e
+
+### Access protected route — paste your access_token here
+GET http://localhost:8000/servers
+Authorization: Bearer <paste_access_token_here>
 
 ###
-GET http://localhost:8000/login
+
+### Refresh — paste your refresh_token here
+POST http://localhost:8000/auth/refresh
+Content-Type: application/json
+
+{
+    "refresh_token": "<paste_refresh_token_here>"
+}
+
+###
+
+### Logout — paste both tokens
+POST http://localhost:8000/auth/logout
+Authorization: Bearer <paste_access_token_here>
+Content-Type: application/json
+
+{
+    "refresh_token": "<paste_refresh_token_here>"
+}

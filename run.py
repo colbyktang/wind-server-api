@@ -4,7 +4,10 @@ Wind Server API - Entry Point
 Run this script to start the game server management API
 """
 
+from dotenv import load_dotenv
 import uvicorn
+
+load_dotenv()
 
 if __name__ == "__main__":
     uvicorn.run(
