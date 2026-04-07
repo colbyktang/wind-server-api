@@ -39,6 +39,7 @@ Run the API server using the included script:
 
 ```bash
 python run.py
+uv run python run.py
 ```
 
 Or use uvicorn directly:

@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.auth.auth_models import Base
+from app.blog import blog_models
 
 # Create SQLite Database file
 DATABASE_URL = "sqlite:///./wind_server.db"
