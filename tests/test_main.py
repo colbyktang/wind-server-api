@@ -8,10 +8,10 @@ def test_read_root(client):
 
 def test_health(client):
     response = client.get("/health")
-    assert response.status_code in [200, 503]
+    assert response.status_code == 200
     data = response.json()
-    assert "status" in data
-    assert "dependencies" in data
+    assert data["status"] == "ok"
+    assert data["dependencies"]["database"] == "ok"
 
 
 def test_list_posts(client):
